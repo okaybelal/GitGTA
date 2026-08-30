@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GitGTA
 
-## Getting Started
+Turn any GitHub profile into a drivable open-world city. Commit activity raises the skyline, repos become landmarks, and you drive/walk through it GTA-style — all rendered live in the browser with Three.js.
 
-First, run the development server:
+```
+github.com/<you>  →  gitgta.com/<you>
+```
+
+This repo is meant to be forked. It's a working example of a pattern — **turn structured data from an API into a 3D world you can explore** — and everything needed to swap "GitHub profile" for your own data source is laid out below.
+
+## Live demo
+
+Paste any GitHub username and drive their city. WASD to walk/drive, Shift to sprint/boost, Space to jump/handbrake, E to enter/exit a vehicle, mouse to look, LMB to punch, RMB for the pistol.
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + React 19 + TypeScript
+- **Three.js** for the 3D scene — no game engine, no React Three Fiber, just a plain render loop
+- **GitHub GraphQL API** as the only external dependency (contribution calendar + repos)
+- Tailwind for the 2D UI chrome (landing page, HUD)
+
+No database. No auth. Every page is generated on request from a GitHub username in the URL.
+
+## How it works
+
+```
+app/[owner]/page.tsx          → intro screen (fetches the profile, shows "Enter city")
+app/api/city/[owner]/route.ts → API route: username in, CityPayload JSON out
+lib/github-client.ts          → GraphQL query against api.github.com/graphql
+lib/city-from-github.ts       → the CityPayload type (the data contract)
+components/GameCanvas.tsx     → mounts the Three.js canvas, hands it the payload
+game/boot.ts                  → wires up the render loop, systems, and UI screens
+game/world/district.ts        → turns CityPayload.days into a city layout (this is the core trick)
+game/render/*                 → building/hero meshes, textures, camera
+game/systems/*                → vehicle physics, collision, combat, missions, NPCs, wanted level
+```
+
+**The core trick** is in `game/world/district.ts`: GitHub's contribution calendar is a 52×7 grid of `{ date, count }`. That grid *is* the city grid — each day becomes a lot, `count` becomes building height, and repos from the profile get placed as named landmarks. Swap that one file's input for a different time-series-shaped dataset (Spotify listening history, Strava activity, stock volume, whatever) and you have a different city generator on the same engine.
+
+## Quickstart
+
+```bash
+git clone https://github.com/okaybelal/GitGTA.git
+cd GitGTA
+npm install
+cp .env.example .env
+```
+
+Add a GitHub token to `.env`:
+
+```
+GITHUB_TOKEN=github_pat_xxxxxxxxxxxx
+```
+
+Generate one at [github.com/settings/tokens](https://github.com/settings/tokens) — a fine-grained token with **read-only access to public repositories** is enough. No scopes beyond that are needed unless you also want organization profiles to work (`read:org`).
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`, paste a GitHub username, drive.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Making it your own
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This is meant as a starting point, not a finished product to just re-skin. A few places to start:
 
-## Learn More
+- **Different data source** — replace `lib/github-client.ts` + `lib/city-from-github.ts` with a fetch against any API that returns a time series. Keep the `CityPayload` shape (or adapt `district.ts` to a new shape) and the rest of the engine — physics, vehicles, camera, HUD — keeps working.
+- **Different city rules** — `game/world/district.ts` is where counts become geometry. Change block size, height scaling, road layout, or what triggers a landmark.
+- **Different vehicles/characters** — drop new `.glb` models into `public/models/` and point `game/render/*` at them.
+- **Different game feel** — `game/systems/mission.ts`, `wanted.ts`, and `combat.ts` are self-contained systems you can strip out or extend independently.
 
-To learn more about Next.js, take a look at the following resources:
+If you build something with this, tag it — I'd like to see it.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploys as-is on [Vercel](https://vercel.com/new): import the repo, set `GITHUB_TOKEN` as an environment variable, deploy. No other infra required.
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT — see [LICENSE](LICENSE). Do whatever you want with it.

@@ -1,6 +1,12 @@
 {
   "name": "gitgta",
   "version": "0.1.0",
+  "description": "Turn any GitHub profile into a drivable open-world city. Commits raise the skyline.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okaybelal/GitGTA"
+  },
   "private": true,
   "author": "belal1908",
   "scripts": {
