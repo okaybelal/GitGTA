@@ -75,6 +75,10 @@ If you build something with this, tag it — I'd like to see it.
 
 Deploys as-is on [Vercel](https://vercel.com/new): import the repo, set `GITHUB_TOKEN` as an environment variable, deploy. No other infra required.
 
+## Acknowledgements
+
+Originally built by [filiksyos](https://github.com/filiksyos/gitgta). This repo is a fork, restructured and documented as a reusable template.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Do whatever you want with it.
